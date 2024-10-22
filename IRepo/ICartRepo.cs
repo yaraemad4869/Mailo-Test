@@ -14,6 +14,7 @@ namespace Mailo.IRepo
         void InsertToCart(int OrderId, int ProductId);
         void DeleteFromCart(int OrderId, int ProductId);
         Task<Order> GetOrCreateCart(User user);
+        Task<List<Order>> GetOrders(User user);
 
 
     }

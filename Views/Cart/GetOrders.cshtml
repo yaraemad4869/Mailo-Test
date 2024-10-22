@@ -1,0 +1,60 @@
+﻿@model List<Order>
+@{
+    ViewData["Title"] = "Show Orders";
+}
+
+<h1>Index</h1>
+<a asp-action="New">Add new Employee</a>
+
+<div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Order Date</th>
+                <th>Products</th>
+                <th>Order Status</th>
+                <th>Total Price</th>
+                <th>Cancel</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Order o in Model)
+            {
+                <tr>
+                    <td>@o.OrderDate</td>
+                    <td>
+                        @if (o.OrderProducts != null && o.OrderProducts.Any())
+                        {
+                            @foreach(Product product in o.OrderProducts.Select(op => op.product).ToList())
+                            {
+                                <h4>@product.Name \n</h4>
+                            }
+                        }
+                    </td>
+                    <td>@o.OrderStatus</td>
+                    <td>@o.TotalPrice</td>
+                    <td>
+                        <form method="post" asp-action="CancelOrder" asp-controller="Cart">
+                            <input name="ID" value="@o.ID" hidden />
+                            <input name="OrderAddress" value="@o.OrderAddress" hidden>
+                            <input name="OrderDate" value="@o.OrderDate" hidden>
+                            <input name="OrderPrice" value="@o.OrderPrice" hidden>
+                            <input name="DeliveryFee" value="@o.DeliveryFee" hidden>
+                            <input name="OrderStatus" value="@o.OrderStatus" hidden>
+                            <input name="UserID" value="@o.UserID" hidden>
+                            <input name="EmpID" value="@o.EmpID" hidden>
+                            <input name="TotalPrice" value="@o.TotalPrice" hidden>
+
+                            <button type="submit">Cancel</button>
+
+                        </form>
+                    </td>
+                    
+                </tr>
+
+            }
+        </tbody>
+    </table>
+
+</div>

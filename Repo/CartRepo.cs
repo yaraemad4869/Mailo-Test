@@ -51,26 +51,16 @@ namespace Mailo.Repo
 
 //    return order;
 //}
-public async Task<Order> GetOrder(User user)
+        public async Task<Order> GetOrder(User user)
         {
-            try
-            {
-                return await _db.Orders.FirstOrDefaultAsync(o => o.UserID == user.ID && o.OrderStatus == OrderStatus.New);
-            }
-            catch (Exception ex)
-            {
-               
-                   Order order = new Order
-                    {
-                        OrderPrice = 0,
-                        OrderAddress = user.Address,
-                        UserID = user.ID
-                    };
-                    _db.Orders.Add(order);
-                    _db.SaveChanges();
-                
-                return order;
-            }
+           return await _db.Orders.FirstOrDefaultAsync(o => o.UserID == user.ID && o.OrderStatus == OrderStatus.New);
+            
+        }
+        public async Task<List<Order>> GetOrders(User user)
+        {
+
+            return _db.Orders.Where(o => o.UserID == user.ID && (o.OrderStatus == OrderStatus.Pending || o.OrderStatus == OrderStatus.Shipped)).ToList();
+
         }
         public async Task<OrderProduct> ExistingCartItem(int productId, User user)
         {

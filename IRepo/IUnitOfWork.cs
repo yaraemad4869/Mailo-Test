@@ -1,4 +1,5 @@
 ﻿using Mailo.Models;
+using Mailoo.IRepo;
 
 namespace Mailo.IRepo
 {
@@ -12,7 +13,7 @@ namespace Mailo.IRepo
 		IBasicRepo<Review> reviews { get; }
 		IBasicRepo<Payment> payments { get; }
         IBasicRepo<OrderProduct> orderProducts { get; }
-
+        IUserInfoRepo userRepo { get; }
         ISearchRepo search { get; }
 
         Task<int> CommitChangesAsync();

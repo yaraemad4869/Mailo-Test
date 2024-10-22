@@ -15,16 +15,14 @@ namespace Mailo.Controllers
     {
         private readonly ICartRepo _order;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly AppDbContext _db;
-        public CartController(ICartRepo order, IUnitOfWork unitOfWork, AppDbContext db)
+        public CartController(ICartRepo order, IUnitOfWork unitOfWork)
         {
             _order = order;
-            _db = db;
             _unitOfWork = unitOfWork;
         }
         public async Task<IActionResult> Index()
         {
-            User? user = _db.Users.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
             if (user == null)
             {
                 TempData["ErrorMessage"] = "User not found";
@@ -35,7 +33,8 @@ namespace Mailo.Controllers
             if (cart == null || cart.OrderProducts == null )
             {
                 TempData["ErrorMessage"] = "Cart is empty";
-                return View();
+                return BadRequest(TempData["ErrorMessage"]);
+
             }
 
             return View(cart.OrderProducts.Select(op => op.product).ToList());
@@ -45,7 +44,7 @@ namespace Mailo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearCart()
         {
-            User? user = _db.Users.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
             var cart = await _order.GetOrCreateCart(user);
             if (cart !=null)
             {
@@ -55,7 +54,8 @@ namespace Mailo.Controllers
             else
             {
                 TempData["ErrorMessage"] = "Cart is already empty";
-                return View();
+                return BadRequest(TempData["ErrorMessage"]);
+
 
             }
 
@@ -65,7 +65,7 @@ namespace Mailo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddProduct(Product product)
         {
-            User? user = await _db.Users.FirstOrDefaultAsync(x => x.Email == User.Identity.Name);
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
             if (user == null)
             {
                 return RedirectToAction("Login", "Account");
@@ -73,7 +73,8 @@ namespace Mailo.Controllers
             if (product == null)
             {
                 TempData["ErrorMessage"] = "Product not found";
-                return View();
+                return BadRequest(TempData["ErrorMessage"]);
+
             }
 
             var cart = await _order.GetOrCreateCart(user);
@@ -108,7 +109,8 @@ namespace Mailo.Controllers
                 if (existingOrderProduct != null)
                 {
                     TempData["ErrorMessage"] = "Product is already in cart";
-                    return View();
+                    return BadRequest(TempData["ErrorMessage"]);
+
                 }
                 else
                 {
@@ -131,12 +133,12 @@ namespace Mailo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveProduct(int productId)
         {
-            User? user = await _db.Users.Where(x => x.Email == User.Identity.Name).FirstOrDefaultAsync();
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
             var cart = await _order.GetOrCreateCart(user);
             if (cart == null)
             {
                 TempData["ErrorMessage"] = "Cart is empty";
-                return View();
+                return BadRequest(TempData["ErrorMessage"]);
             }
             else{
                 var orderProduct = cart.OrderProducts.FirstOrDefault(op => op.ProductID == productId);
@@ -149,12 +151,13 @@ namespace Mailo.Controllers
                     {
                         await ClearCart();
                     }
-                    _db.SaveChanges();
+                    await _unitOfWork.CommitChangesAsync();
                 }
                 else
                 {
                     TempData["ErrorMessage"] = "Product not found";
-                    return View();
+                    return BadRequest(TempData["ErrorMessage"]);
+
 
                 }
             }
@@ -165,31 +168,85 @@ namespace Mailo.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> NewOrder()
         {
-            var user = _db.Users.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
             if (user == null)
             {
                 return RedirectToAction("Login", "Account");
             }
-            var existingOrderItem = await _order.GetOrder(user);
+            var existingOrderItem = await _order.GetOrCreateCart(user);
 
             if (existingOrderItem == null || (existingOrderItem.OrderStatus != OrderStatus.New))
             {
                 TempData["ErrorMessage"] = "Cart is already ordered";
-                return View();
+                return BadRequest(TempData["ErrorMessage"]);
+
             }
-            var products = await _db.OrderProducts.Where(op => op.OrderID == existingOrderItem.ID)
+            if(existingOrderItem.OrderProducts!=null && existingOrderItem.OrderProducts.Any())
+            {
+            var products = existingOrderItem.OrderProducts.Where(op => op.OrderID == existingOrderItem.ID)
                 .Select(op => op.product)
-                .ToListAsync();
+                .ToList();
             foreach (var product in products)
             {
                 product.Quantity -= 1;
             }
+
             existingOrderItem.OrderStatus = OrderStatus.Pending;
             _unitOfWork.orders.Update(existingOrderItem);
             TempData["Success"] = "Cart Has Been Ordered Successfully";
-            return RedirectToAction("Index");
+                return RedirectToAction("Index");
+            }
+            TempData["ErrorMessage"] = "Cart is empty";
+            return BadRequest(TempData["ErrorMessage"]);
         }
-        
-    }
 
+        public async Task<IActionResult> GetOrders()
+        {
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            var orders = await _order.GetOrders(user);
+            if (orders != null)
+            {
+                return View(orders);
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Cart is already empty";
+                return BadRequest(TempData["ErrorMessage"]);
+            }
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(Order order)
+        {
+            User? user = await _unitOfWork.userRepo.GetUser(User.Identity.Name);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            if (order != null)
+            {
+                var orderProducts =await _unitOfWork.orderProducts.GetAll();
+                var orderP= orderProducts.Where(op=>op.OrderID==order.ID);
+
+                if (orderP.Any())
+                {
+                    foreach (var orderProduct in orderP)
+                    {
+                        _unitOfWork.orderProducts.Delete(orderProduct);
+                    }
+                }
+                _unitOfWork.orders.Delete(order);
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Cart is already empty";
+                return BadRequest(TempData["ErrorMessage"]);
+            }
+        }
+    }
 }

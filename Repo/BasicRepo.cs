@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Mailo.Data;
 using Mailo.IRepo;
 using Mailo.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 
 namespace Mailo.Repo
 {
@@ -14,6 +18,7 @@ namespace Mailo.Repo
         {
             _db = db;
         }
+		
         public async Task<List<T>> GetAll()
 		{
 			return await _db.Set<T>().ToListAsync();
@@ -39,6 +44,10 @@ namespace Mailo.Repo
 			_db.Set<T>().Remove(entity);
             _db.SaveChanges();
         }
-
+		public void DeleteRange(ICollection<T> entity)
+		{
+            _db.Set<T>().RemoveRange(entity);
+            _db.SaveChanges();
+        }
     }
 }

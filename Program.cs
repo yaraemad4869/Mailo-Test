@@ -6,6 +6,8 @@ using Mailo.Models;
 using Mailo.IRepo;
 using Mailo.Repo;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Mailoo.IRepo;
+using Mailoo.Repo;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(op => op.UseSqlServer(builder.Configuration.GetConnectionString("ConStr")));
@@ -13,6 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(op => op.UseSqlServer(builder.Config
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IAddToWishlistRepo), typeof(AddToWishlistRepo));
 builder.Services.AddScoped(typeof(ICartRepo), typeof(CartRepo));
+builder.Services.AddScoped(typeof(IUserInfoRepo), typeof(UserInfoRepo));
 builder.Services.AddScoped<IBasicRepo<Order>, BasicRepo<Order>>();
 
 

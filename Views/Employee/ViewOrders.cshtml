@@ -9,25 +9,27 @@
     <thead>
         <tr>
             <th>ID</th>
-            <th>Order Address</th>
+            @* <th>Order Address</th> *@
             <th>Order Date</th>
             <th>Order Price</th>
             <th>Delivery Fee</th>
-            @* <th>Total Price</th> *@
+            <th>Total Price</th> 
             @* <th>Phone Number</th> *@
             <th></th>
         </tr>
     </thead>
     <tbody>
+        @if(Model != null && Model.Any())
+{
         @foreach(Order o in Model)
         {
             <tr>
                 <td>@o.ID</td>
-                <td>@o.OrderAddress</td>
+                @* <td>@o.user.Address</td> *@
                 <td>@o.OrderDate </td>
                 <td>@o.OrderPrice</td>
                 <td>@o.DeliveryFee</td>
-                @* <td>@o.TotalPrice</td> *@
+                <td>@o.TotalPrice</td>
                 @* <td>@o.user.PhoneNumber</td> *@
                 <td>
 
@@ -49,6 +51,7 @@
                 </td>
 
             </tr>
+        }
         }
         else
         {

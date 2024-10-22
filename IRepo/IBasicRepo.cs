@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Mailo.Models;
 namespace Mailo.IRepo
 {
 	public interface IBasicRepo<T> where T : class
@@ -8,6 +9,7 @@ namespace Mailo.IRepo
 		void Insert(T entity);
         void Update(T entity);
         void Delete(T entity);
+        void DeleteRange(ICollection<T> entity);
 
-	}
+    }
 }

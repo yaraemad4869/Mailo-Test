@@ -1,6 +1,8 @@
 ﻿using Mailo.Data;
 using Mailo.IRepo;
 using Mailo.Models;
+using Mailoo.IRepo;
+using Mailoo.Repo;
 
 namespace Mailo.Repo
 {
@@ -19,6 +21,7 @@ namespace Mailo.Repo
 			payments=new BasicRepo<Payment>(_db);
             orderProducts=new BasicRepo<OrderProduct>(_db);
             search =new SearchRepo(_db);
+            userRepo = new UserInfoRepo(_db);
         }
 		public IBasicRepo<User> users { get; private set; }
 		public IBasicRepo<Employee> employees { get; private set; }
@@ -27,7 +30,7 @@ namespace Mailo.Repo
 		public IBasicRepo<Wishlist> wishlists { get; private set; }
 		public IBasicRepo<Review> reviews { get; private set; }
         public IBasicRepo<OrderProduct> orderProducts { get; private set; }
-
+        public IUserInfoRepo userRepo { get; private set; }
         public IBasicRepo<Payment> payments { get; private set; }
 		public ISearchRepo search { get; private set; }
 		public async Task<int> CommitChangesAsync()

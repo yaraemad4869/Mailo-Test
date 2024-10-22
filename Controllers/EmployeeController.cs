@@ -78,26 +78,49 @@ namespace Mailo.Controllers
             return NotFound();
 
         }
-        
         public async Task<IActionResult> ViewOrders()
         {
-            try
+            var orders = await _unitOfWork.orders.GetAll();
+            if (orders == null)
             {
-                var orders = await _unitOfWork.orders.GetAll();
-                return View(orders.Where(o => (o.OrderStatus == OrderStatus.Pending && o.EmpID == null)).ToList());
+                TempData["ErrorMessage"] = "Orders list is null";
+                return View("Error", TempData["ErrorMessage"]);
+            }
+            else
+            {
+                var available = orders
+                    .Where(o => o != null && o.OrderStatus == OrderStatus.Pending && o.EmpID == null)
+                    .ToList();
+
+                if (available.Any()) // Check if there are any available orders
+                {
+                    return View(available);
+
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Orders list is null";
+                    return View("Error", TempData["ErrorMessage"]);
+                }
 
             }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "No Available Orders";
-                return View(ex);
-            }
         }
+
+        //public async Task<IActionResult> ViewOrders()
+        //{
+        //    var orders = await _unitOfWork.orders.GetAll();
+        //    var available = orders.Where(o => (o.OrderStatus == OrderStatus.Pending && o.EmpID == null)).ToList();
+        //    if (available != null)
+        //    {
+        //        return View(available);
+        //    }
+        //    TempData["ErrorMessage"] = "There is no orders";
+        //    return View(TempData["ErrorMessage"]);
+        //}
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AcceptOrder(Order order)
         {
-            //Order order = await _unitOfWork.orders.GetByID(order);
             Employee employee = await _db.Employees.Where(x => x.Email == User.Identity.Name).FirstOrDefaultAsync();
             order.EmpID = employee.ID;
             _unitOfWork.orders.Update(order);
@@ -109,17 +132,14 @@ namespace Mailo.Controllers
         public async Task<IActionResult> ViewRequiredOrders()
         {
             Employee employee = await _db.Employees.FirstOrDefaultAsync(x => x.Email == User.Identity.Name); 
-            try
+            var orders = await _unitOfWork.orders.GetAll();
+            var available = orders.Where(o => o.EmpID == employee.ID).ToList();
+            if (available != null)
             {
-                var orders = await _unitOfWork.orders.GetAll();
-                return View(orders.Where(o => o.EmpID == employee.ID).ToList());
-
+                return View(available);
             }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "There is no orders";
-                return View(ex);
-            }
+            TempData["ErrorMessage"] = "There is no orders";
+            return View(TempData["ErrorMessage"]);
         }
         public async Task<IActionResult> EditOrder(int OrderId)
         {
