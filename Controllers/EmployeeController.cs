@@ -147,20 +147,26 @@ namespace Mailo.Controllers
         }
         public async Task<IActionResult> EditOrder(int OrderId)
         {
-            return View(await _unitOfWork.orders.GetByID(OrderId));
+            var order = await _db.Orders
+         .Include(o => o.user)
+         .Include(o => o.employee)
+         .FirstOrDefaultAsync(o => o.ID == OrderId);
+            return View(order);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditOrder(Order order)
+        public IActionResult EditOrder(Order order)
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.orders.Update(order);
-                TempData["Success"] = "Order Has Been Updated Successfully";
-                return RedirectToAction("Index");
+                if (order != null)
+                {
+                    _unitOfWork.orders.Update(order);
+                    TempData["Success"] = "Order Has Been Updated Successfully";
+                    return RedirectToAction("Index");
+                }
             }
             return View(order);
-            
         }
     }
 }

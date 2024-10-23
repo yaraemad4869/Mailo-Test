@@ -35,7 +35,7 @@ namespace Mailo.Models
         public OrderStatus OrderStatus { get; set; } = OrderStatus.New;
         [ForeignKey("user")]
 		public int UserID { get; set; }
-		public User user { get; set; }
+		public User? user { get; set; }
 		[ForeignKey("employee")]
 		public int? EmpID { get; set; }
 		public Employee? employee { get; set; }
